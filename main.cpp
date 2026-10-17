@@ -6,58 +6,60 @@
 
 using namespace std;
 
+// CONSTANT VARIABLES
+const int RANGE_X = 30; // max range
+const int RANGE_Y = 30;
+
 void rangeErr(int min, int max, int& input);
-void mineInit(int wdth, int hght, bool& a);
+void mineInit(int wdth, int hght, bool& a[RANGE_X][RANGE_Y]);
 
 int main() {
 
     // init random seed
     srand(time(nullptr));
 
-    // CONSTANT VARIABLES
-    const int RANGE_X = 30;
-    const int RANGE_Y = 30;
-
     // variables
     int mapX, mapY; // map dimensions
     int userX, userY;   // user position
-    bool mineMap[RANGE_X][RANGE_Y] = {};
-    int cellMap[RANGE_X][RANGE_Y] = {};
+    bool mineMap[RANGE_X][RANGE_Y] = {false, false};
+    int cellMap[RANGE_X][RANGE_Y] = {0, 0};
 
     // title
     cout << "MINEREAPER: Kill the mines by exposing their facade!" << endl;
 
     // configure map
-    cout << "What is the map width? (1-30 inclusive): ";
+    cout << "What is the map width? (1-" << RANGE_X << " inclusive): ";
     cin >> mapX;
-    rangeErr(1, 30, mapX);
+    rangeErr(1, RANGE_X, mapX);
 
-    cout << "What is the map height? (1-30 inclusive): ";
+    cout << "What is the map height? (1-" << RANGE_Y << " inclusive): ";
     cin >> mapY;
-    rangeErr(1, 30, mapY);
+    rangeErr(1, RANGE_Y, mapY);
 
-    map = mapInit(RANGE_X, RANGE_Y, map);
+    mineMap = mineMap(mapX, mapY, mineMap);
     
+    SDL_Event event;
+
     // game loop
     while (true) {
         SDL_WaitEvent(&event);  // waits for event (key press)
 
         // key input
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.key == SDLK_DOWN) {           // movement
-                userY--;
-            } else if (event.key.key == SDLK_UP) {      // ||
+            if (event.key.key == SDLK_DOWN && userY > 0) {           // movement
                 userY++;
+            } else if (event.key.key == SDLK_UP && userY < mapY) {      // ||
+                userY--;
             } else if (event.key.key == SDLK_LEFT) {    // ||
                 userX--;
             } else if (event.key.key == SDLK_RIGHT) {   // ||
                 userX++;
-            } else if (event.key.key == SDLK_RETURN) {  // check for cell
-                
+            } else if (event.key.key == SDLK_RETURN) {  // clear cell
+                ;
             } else if (event.key.key == SDLK_BACKSPACE) {   // flag
-                
+                ;
             } else if (event.key.key == SDLK_ESCAPE) {  // quit
-                
+                break;
             }
         }
 
@@ -80,14 +82,35 @@ void rangeErr(int min, int max, int& input) {
 }
 
 // init mine map
-void mineInit(int wdth, int hght, bool& a) {
+void mineInit(int wdth, int hght, bool& a[RANGE_X][RANGE_Y]) {
     for (int i = 0; i < (wdth * hght * 0.15); i++) {
-        int rndX = rand() % (wdth * hght);  // random coordinates
-        int rndY = rand() % (wdth * hght);
+        int rndX = rand() % wdth;  // random coordinates
+        int rndY = rand() % hght;
         while (a[rndX][rndY] == true) { // retry until mine is placeable
-            rndX = rand() % (wdth * hght);
-            rndY = rand() % (wdth * hght);
-            a[rndX][rndY] = true;
+            rndX = rand() % wdth;
+            rndY = rand() % hght;
+        }
+        // set cell to mine
+        a[rndX][rndY] = true;
+    }
+}
+
+void mapInit(int& a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]) {
+    for (int i = 0; i < RANGE_Y; i++) {
+        for (int j = 0; j < RANGE_X; j++) {
+            if (b[j][i] == true) {  // init indicators
+                for (int k = -1; k < 2; k++) {
+                    for (int l = -1; l < 2; l++) {
+                        int x = j + l;
+                        int y = i + k;
+                        if (k != 0 || l != 0) {
+                            if (!()) {
+                                a[][i+k]++;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
