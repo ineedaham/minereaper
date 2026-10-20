@@ -11,7 +11,8 @@ const int RANGE_X = 30; // max range
 const int RANGE_Y = 30;
 
 void rangeErr(int min, int max, int& input);
-void mineInit(int wdth, int hght, bool& a[RANGE_X][RANGE_Y]);
+void mineInit(int wdth, int hght, bool b[RANGE_X][RANGE_Y]);
+void mapInit(int wdth, int hght, int a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]);
 
 int main() {
 
@@ -36,37 +37,49 @@ int main() {
     cin >> mapY;
     rangeErr(1, RANGE_Y, mapY);
 
-    mineMap = mineMap(mapX, mapY, mineMap);
+    mineInit(mapX, mapY, mineMap);
+    mapInit(mapX, mapY, cellMap, mineMap);
     
     SDL_Event event;
 
     // game loop
-    while (true) {
-        SDL_WaitEvent(&event);  // waits for event (key press)
+    // while (true) {
+    //     SDL_WaitEvent(&event);  // waits for event (key press)
 
-        // key input
-        if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.key == SDLK_DOWN && userY > 0) {           // movement
-                userY++;
-            } else if (event.key.key == SDLK_UP && userY < mapY) {      // ||
-                userY--;
-            } else if (event.key.key == SDLK_LEFT) {    // ||
-                userX--;
-            } else if (event.key.key == SDLK_RIGHT) {   // ||
-                userX++;
-            } else if (event.key.key == SDLK_RETURN) {  // clear cell
-                ;
-            } else if (event.key.key == SDLK_BACKSPACE) {   // flag
-                ;
-            } else if (event.key.key == SDLK_ESCAPE) {  // quit
-                break;
+    //     // key input
+    //     if (event.type == SDL_EVENT_KEY_DOWN) {
+    //         if (event.key.key == SDLK_DOWN && userY > 0) {           // movement
+    //             userY++;
+    //         } else if (event.key.key == SDLK_UP && userY < mapY) {      // ||
+    //             userY--;
+    //         } else if (event.key.key == SDLK_LEFT) {    // ||
+    //             userX--;
+    //         } else if (event.key.key == SDLK_RIGHT) {   // ||
+    //             userX++;
+    //         } else if (event.key.key == SDLK_RETURN) {  // clear cell
+    //             ;
+    //         } else if (event.key.key == SDLK_BACKSPACE) {   // flag
+    //             ;
+    //         } else if (event.key.key == SDLK_ESCAPE) {  // quit
+    //             break;
+    //         }
+    //     }
+
+    //     // quit
+    //     if (event.type == SDL_EVENT_QUIT) {
+    //         break;
+    //     }
+    // }
+    for (int i = 0; i < mapY; i++) {
+        for (int j = 0; j < mapX; j++) {
+            if (mineMap[j][i] == true) {
+                cout << '#';
+            } else {
+                cout << cellMap[j][i];
             }
+            cout << ' ';
         }
-
-        // quit
-        if (event.type == SDL_EVENT_QUIT) {
-            break;
-        }
+        cout << endl;
     }
 
     return 0;
@@ -82,7 +95,7 @@ void rangeErr(int min, int max, int& input) {
 }
 
 // init mine map
-void mineInit(int wdth, int hght, bool& a[RANGE_X][RANGE_Y]) {
+void mineInit(int wdth, int hght, bool a[RANGE_X][RANGE_Y]) {
     for (int i = 0; i < (wdth * hght * 0.15); i++) {
         int rndX = rand() % wdth;  // random coordinates
         int rndY = rand() % hght;
@@ -95,17 +108,17 @@ void mineInit(int wdth, int hght, bool& a[RANGE_X][RANGE_Y]) {
     }
 }
 
-void mapInit(int& a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]) {
-    for (int i = 0; i < RANGE_Y; i++) {
-        for (int j = 0; j < RANGE_X; j++) {
+void mapInit(int wdth, int hght, int a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]) {
+    for (int i = 0; i < hght; i++) {
+        for (int j = 0; j < wdth; j++) {
             if (b[j][i] == true) {  // init indicators
                 for (int k = -1; k < 2; k++) {
                     for (int l = -1; l < 2; l++) {
                         int x = j + l;
                         int y = i + k;
                         if (k != 0 || l != 0) {
-                            if (!()) {
-                                a[][i+k]++;
+                            if (!(i + k < 0 || i + k > hght - 1 || j + l < 0 || j + l > wdth - 1)) {
+                                a[j+l][i+k]++;
                             }
                         }
                     }
