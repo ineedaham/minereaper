@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <SDL3/SDL.h>   // for key input
+#include <string>
 
 using namespace std;
 
@@ -11,8 +12,9 @@ const int RANGE_X = 30; // max range
 const int RANGE_Y = 30;
 
 void rangeErr(int min, int max, int& input);
-void mineInit(int wdth, int hght, bool b[RANGE_X][RANGE_Y]);
+void mineInit(int wdth, int hght, bool a[RANGE_X][RANGE_Y], int b[1][1]);
 void mapInit(int wdth, int hght, int a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]);
+void dispInit(int wdth, int hght, char a[RANGE_X][RANGE_Y], int startPos[RANGE_X][RANGE_Y]);
 
 int main() {
 
@@ -22,8 +24,6 @@ int main() {
     // variables
     int mapX, mapY; // map dimensions
     int userX, userY;   // user position
-    bool mineMap[RANGE_X][RANGE_Y] = {false, false};
-    int cellMap[RANGE_X][RANGE_Y] = {0, 0};
 
     // title
     cout << "MINEREAPER: Kill the mines by exposing their facade!" << endl;
@@ -37,39 +37,68 @@ int main() {
     cin >> mapY;
     rangeErr(1, RANGE_Y, mapY);
 
+    bool mineMap[mapX][mapY] = {false, false};
+    bool discMap[mapX][mapY] = {};
+    int cellMap[mapX][mapY] = {0, 0};   // properties map
+    char dispMap[mapX][mapY] = {"", ""};
+    int choice[1][2] = {};
+
+    int arr[mapX][mapY] = {};
+
+    // 47 mins into the sesh:
+    /*
+    k so i am going to switch to one array of ints for storing properties:
+    -1 = mine present
+    0 = no adjacent mines 
+    >0 = adjacent mine count
+
+    maybe another for seeing if spot is undiscovered
+
+    func structure for checking cell from now on:
+    if cell is not discovered:
+        write discovery of cell to bool array
+        check if a mine is present
+        kill if yes, otherwise write to a character array the current character (amount of adjacent mines or none at all)
+    otherwise:
+        do nothing
+    if flagging:
+        change current character to flag
+        sub from remaining flags
+    */
+
     mineInit(mapX, mapY, mineMap);
     mapInit(mapX, mapY, cellMap, mineMap);
     
     SDL_Event event;
 
-    // game loop
-    // while (true) {
-    //     SDL_WaitEvent(&event);  // waits for event (key press)
+    game loop
+    while (true) {
+        SDL_WaitEvent(&event);  // waits for event (key press)
 
-    //     // key input
-    //     if (event.type == SDL_EVENT_KEY_DOWN) {
-    //         if (event.key.key == SDLK_DOWN && userY > 0) {           // movement
-    //             userY++;
-    //         } else if (event.key.key == SDLK_UP && userY < mapY) {      // ||
-    //             userY--;
-    //         } else if (event.key.key == SDLK_LEFT) {    // ||
-    //             userX--;
-    //         } else if (event.key.key == SDLK_RIGHT) {   // ||
-    //             userX++;
-    //         } else if (event.key.key == SDLK_RETURN) {  // clear cell
-    //             ;
-    //         } else if (event.key.key == SDLK_BACKSPACE) {   // flag
-    //             ;
-    //         } else if (event.key.key == SDLK_ESCAPE) {  // quit
-    //             break;
-    //         }
-    //     }
+        // key input
+        if (event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.key.key == SDLK_DOWN && userY > 0) {           // movement
+                userY++;
+            } else if (event.key.key == SDLK_UP && userY < mapY) {      // ||
+                userY--;
+            } else if (event.key.key == SDLK_LEFT) {    // ||
+                userX--;
+            } else if (event.key.key == SDLK_RIGHT) {   // ||
+                userX++;
+            } else if (event.key.key == SDLK_RETURN) {  // clear cell
+                choice[0][0] = {userX, userY};
+            } else if (event.key.key == SDLK_BACKSPACE) {   // flag
+                ;
+            } else if (event.key.key == SDLK_ESCAPE) {  // quit
+                break;
+            }
+        }
 
-    //     // quit
-    //     if (event.type == SDL_EVENT_QUIT) {
-    //         break;
-    //     }
-    // }
+        // quit
+        if (event.type == SDL_EVENT_QUIT) {
+            break;
+        }
+    }
     for (int i = 0; i < mapY; i++) {
         for (int j = 0; j < mapX; j++) {
             if (mineMap[j][i] == true) {
@@ -95,11 +124,11 @@ void rangeErr(int min, int max, int& input) {
 }
 
 // init mine map
-void mineInit(int wdth, int hght, bool a[RANGE_X][RANGE_Y]) {
+void mineInit(int wdth, int hght, bool a[RANGE_X][RANGE_Y], int b[1][2]) {
     for (int i = 0; i < (wdth * hght * 0.15); i++) {
         int rndX = rand() % wdth;  // random coordinates
         int rndY = rand() % hght;
-        while (a[rndX][rndY] == true) { // retry until mine is placeable
+        while (a[rndX][rndY] == true || b[0][1] == {{rndX, rndY}}) { // retry until mine is placeable
             rndX = rand() % wdth;
             rndY = rand() % hght;
         }
@@ -108,6 +137,7 @@ void mineInit(int wdth, int hght, bool a[RANGE_X][RANGE_Y]) {
     }
 }
 
+// init adjacent mine counts
 void mapInit(int wdth, int hght, int a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y]) {
     for (int i = 0; i < hght; i++) {
         for (int j = 0; j < wdth; j++) {
@@ -116,14 +146,29 @@ void mapInit(int wdth, int hght, int a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_
                     for (int l = -1; l < 2; l++) {
                         int x = j + l;
                         int y = i + k;
-                        if (k != 0 || l != 0) {
-                            if (!(i + k < 0 || i + k > hght - 1 || j + l < 0 || j + l > wdth - 1)) {
-                                a[j+l][i+k]++;
-                            }
+                        // check for bad assignment
+                        if (k != 0 || l != 0 && !(i + k < 0 || i + k > hght - 1 || j + l < 0 || j + l > wdth - 1)) {
+                            a[j+l][i+k]++;
                         }
                     }
                 }
             }
         }
     }
+}
+
+// init display of map
+void dispInit(int wdth, int hght, char a[RANGE_X][RANGE_Y], bool b[RANGE_X][RANGE_Y], int startPos[1][1]) {
+    a[startPos[0][0]][startPos[0][1]] = '\'';
+    for (int i = 0; i < hght; i++) {
+        for (int j = 0; j < wdth; j++) {
+            if (b[j][i] == true) {
+                a[j][i] = '';
+            }
+        }
+    }
+}
+
+void checkCell(int wdth, int hght, bool a[RANGE_X][RANGE_Y], int b[RANGE_X][RANGE_Y], bool c[RANGE_X][RANGE_Y]) {
+    if()
 }
